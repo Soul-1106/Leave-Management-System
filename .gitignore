@@ -1,0 +1,46 @@
+# Environment and secrets
+.env
+.env.*
+
+# Node / Vite
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+.vite/
+
+# Go build and test artifacts
+*.exe
+*.exe~
+*.test
+*.out
+coverage/
+coverage.*
+.gocache/
+.gomodcache/
+backend/.gocache/
+backend/.gomodcache/
+
+# Logs and runtime files
+*.log
+*.pid
+*.tmp
+tmp/
+temp/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
+
+# Local tooling
+.cache/
+.eslintcache
+
+# Documentation build and render intermediates
+docs/.work/

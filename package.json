@@ -1,0 +1,14 @@
+{
+  "name": "leave-management-system",
+  "version": "1.0.0",
+  "description": "Root project manager for Leave Management System",
+  "scripts": {
+    "setup": "npm install --prefix frontend && cd backend && go mod download",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && set GOCACHE=%INIT_CWD%\\backend\\.gocache&& set GOMODCACHE=%INIT_CWD%\\backend\\.gomodcache&& go run -buildvcs=false ./cmd",
+    "dev": "concurrently -c \"cyan.bold,magenta.bold\" -n \"BACKEND,FRONTEND\" \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
