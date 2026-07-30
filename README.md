@@ -1,3 +1,5 @@
+ run 
+
 # Leave Management System
 
 Role-based leave management for employees, managers, and administrators. The
@@ -18,18 +20,17 @@ gmail=haneeff110@gmail.com
 password=123456
 ```
 
-```manager account
+```manager
 gmail=hasan@gmail.com
 password=hjw4y3ggd
 ```
 
-```employee account
+```employee
 gmail=jack@gmail.com
 password=eywhr324cf
 ```
 
 ## Fresh project setup
-
 
 > Never commit `.env`, database passwords, service-role keys, JWT secrets, or
 > production credentials. The repository `.gitignore` excludes `.env` files.
@@ -46,6 +47,17 @@ npm.cmd run dev
 
 The preflight script validates the tools and environment configuration and
 automatically installs missing root, frontend, and Go dependencies.
+
+This starts both:
+
+- Go backend: `http://localhost:8080`
+- Vite frontend: `http://localhost:5173`
+
+Open the development application at:
+
+```text
+http://localhost:5173
+```
 
 ### 2. Deploy on Render guide
 
@@ -78,42 +90,18 @@ Remove-Item backend/cmd/web/* -Recurse -Force
 Copy-Item frontend/dist/* backend/cmd/web/ -Recurse -Force
 ```
 
-# Three alternatives to run the program locally:
+## other alternatives to run the program locally as a single production-style server:
 
-## 1. Run in development
-
-From the project root:
+build the react frontend
 
 ```powershell
-npm.cmd run dev
+cd frontend
+npm.cmd run build
+cd ..
+
+Remove-Item backend/cmd/web/* -Recurse -Force
+Copy-Item frontend/dist/* backend/cmd/web/ -Recurse -Force
 ```
-
-Before starting, this automatically checks the Node.js and Go installations,
-required `.env` variables, and Supabase URL formats. Missing project dependencies
-are installed automatically. Use `npm.cmd` in PowerShell if script execution
-policy blocks `npm.ps1`.
-
-This starts both:
-
-- Go backend: `http://localhost:8080`
-- Vite frontend: `http://localhost:5173`
-
-Open the development application at:
-
-```text
-http://localhost:5173
-```
-
-## 2. Run only the Go backend
-
-From the project root:
-
-```powershell
-go run ./backend/cmd
-```
-
-
-## 3. Run as a single production-style server
 
 After the React frontend has been built and copied into `backend/cmd/web`,
 Node.js is not required to run the application:
@@ -128,7 +116,6 @@ Open:
 ```text
 http://localhost:8080
 ```
-
 
 ## Tests commands if needed
 
