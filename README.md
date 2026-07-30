@@ -9,7 +9,9 @@ production application runs as one Go server with the React frontend embedded.
 - Node.js 22 or newer, only for frontend development and builds
 - A Supabase project
 
-# Three alternatives to run the program:
+The application has been deployed on cloud service and can be accessed via: https://leave-management-system-zmf0.onrender.com/
+
+# Three alternatives to run the program locally:
 
 ## 1. Run in development
 
