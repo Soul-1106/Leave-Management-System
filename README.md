@@ -11,6 +11,73 @@ production application runs as one Go server with the React frontend embedded.
 
 The application has been deployed on cloud service and can be accessed via: https://leave-management-system-zmf0.onrender.com/
 
+# Testing accounts and their passwords for accessing the dashboard
+
+```admin
+gmail=haneeff110@gmail.com
+password=123456
+```
+
+```manager account
+gmail=hasan@gmail.com
+password=hjw4y3ggd
+```
+
+```employee account
+gmail=jack@gmail.com
+password=eywhr324cf
+```
+
+## Fresh project setup
+
+
+> Never commit `.env`, database passwords, service-role keys, JWT secrets, or
+> production credentials. The repository `.gitignore` excludes `.env` files.
+> `VITE_SUPABASE_ANON_KEY` is intended for the browser, but it must not be
+> confused with the private `SUPABASE_SERVICE_ROLE_KEY`.
+
+### 1. Install and run
+
+From the project root:
+
+```powershell
+npm.cmd run dev
+```
+
+The preflight script validates the tools and environment configuration and
+automatically installs missing root, frontend, and Go dependencies.
+
+### 2. Deploy on Render guide
+
+The production React build is embedded into the Go server, so only one Render
+Web Service is required.
+
+Configure the Render service as follows:
+
+```text
+Service type: Web Service
+Runtime: Go
+Root directory: backend
+Build command: go build -o app ./cmd
+Start command: ./app
+Health check path: /health/ready
+```
+
+Add all four environment variables listed above through Render's Environment
+settings.
+
+Before committing frontend changes for the embedded production server, rebuild
+and copy the generated files:
+
+```powershell
+cd frontend
+npm.cmd run build
+cd ..
+
+Remove-Item backend/cmd/web/* -Recurse -Force
+Copy-Item frontend/dist/* backend/cmd/web/ -Recurse -Force
+```
+
 # Three alternatives to run the program locally:
 
 ## 1. Run in development
@@ -62,22 +129,7 @@ Open:
 http://localhost:8080
 ```
 
-# Testing accounts and their passwords for accessing the dashboard
 
-```admin
-gmail=haneeff110@gmail.com
-password=123456
-```
-
-```manager account
-gmail=hasan@gmail.com
-password=12345678
-```
-
-```employee account
-gmail=jack@gmail.com
-password=12345678
-```
 ## Tests commands if needed
 
 Run all backend checks:
