@@ -103,13 +103,17 @@ export async function apiPatch(path, payload) {
   return apiWriteStrict('PATCH', path, payload);
 }
 
+export async function apiDelete(path) {
+  return apiWriteStrict('DELETE', path);
+}
+
 async function apiWriteStrict(method, path, payload) {
   const headers = getHeaders({}, true);
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers,
     credentials: 'include',
-    body: JSON.stringify(payload),
+    body: payload === undefined ? undefined : JSON.stringify(payload),
   });
   if (!res.ok) {
     const text = await res.text();

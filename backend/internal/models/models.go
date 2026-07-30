@@ -27,6 +27,7 @@ type Approval struct {
 	Dates          string `json:"dates"`
 	Reason         string `json:"reason"`
 	Requested      string `json:"requested"`
+	DecisionDate   string `json:"decisionDate,omitempty"`
 	Days           int    `json:"days"`
 	Status         string `json:"status"`
 	HasAttachment  bool   `json:"hasAttachment"`

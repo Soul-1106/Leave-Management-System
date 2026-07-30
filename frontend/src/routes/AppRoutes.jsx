@@ -13,7 +13,7 @@ import { UserManagement } from '../pages/admin/UserManagement';
 import { NotFound } from '../pages/NotFound';
 import { getInitials } from '../utils/helpers';
 import { useAuth } from '../hooks/useAuth';
-import { apiGet, apiGetStrict, apiPatch, apiPostStrict, apiUploadStrict } from '../services/api';
+import { apiDelete, apiGet, apiGetStrict, apiPatch, apiPostStrict, apiUploadStrict } from '../services/api';
 import { roleNavigation } from '../config';
 
 const initialApplication = {
@@ -37,6 +37,7 @@ export function AppRoutes() {
     balances: [],
     myLeaves: [],
     approvals: [],
+    approvalHistory: [],
     employees: [],
     adminUsers: [],
     adminBalances: [],
@@ -52,21 +53,23 @@ export function AppRoutes() {
       apiGet('/dashboard/stats'),
       employee ? apiGet('/leaves/balances') : Promise.resolve([]),
     ]);
-    const [myLeaves, approvals, employees] = manager
+    const [myLeaves, approvals, approvalHistory, employees] = manager
       ? await Promise.all([
           Promise.resolve([]),
           apiGet('/leaves/approvals'),
+          apiGet('/leaves/history'),
           apiGet('/employees'),
         ])
       : await Promise.all([
           apiGet('/leaves/my'),
           Promise.resolve([]),
           Promise.resolve([]),
+          Promise.resolve([]),
         ]);
     const [adminUsers, adminBalances, departments] = admin
       ? await Promise.all([apiGet('/admin/users'), apiGet('/admin/balances'), apiGet('/admin/departments')])
       : [[], [], []];
-    setAppData({ stats: stats || [], balances: balances || [], myLeaves: myLeaves || [], approvals: approvals || [], employees: employees || [], adminUsers: adminUsers || [], adminBalances: adminBalances || [], departments: departments || [], loading: false });
+    setAppData({ stats: stats || [], balances: balances || [], myLeaves: myLeaves || [], approvals: approvals || [], approvalHistory: approvalHistory || [], employees: employees || [], adminUsers: adminUsers || [], adminBalances: adminBalances || [], departments: departments || [], loading: false });
   }, [user.role]);
 
   useEffect(() => {
@@ -169,7 +172,14 @@ function renderPage(view, role, { setApplication, setToast, application, appData
   }
 
   if (view === 'my-leaves') {
-    return <MyLeaves leaves={appData.myLeaves} />;
+    return <MyLeaves leaves={appData.myLeaves} onDelete={async (leave) => {
+      await apiDelete(`/leaves/my/${leave.id}`);
+      await refreshData();
+      setToast({
+        title: 'Leave request deleted',
+        message: 'The pending request has been removed.',
+      });
+    }} />;
   }
 
   if (view === 'apply') {
@@ -237,6 +247,28 @@ function renderPage(view, role, { setApplication, setToast, application, appData
     }} />;
   }
 
+  if (view === 'history' && role === 'manager') {
+    return <LeaveApprovals
+      title="Decision History"
+      approvals={appData.approvalHistory}
+      onViewAttachment={async (item) => {
+        const popup = window.open('', '_blank');
+        try {
+          const attachment = await apiGetStrict(`/attachments/${item.leaveId}`);
+          if (popup) {
+            popup.opener = null;
+            popup.location = attachment.url;
+          } else {
+            window.location.assign(attachment.url);
+          }
+        } catch (error) {
+          popup?.close();
+          window.alert(error.message || 'Unable to open attachment');
+        }
+      }}
+    />;
+  }
+
   if (view === 'admin-users' && role === 'admin') {
     return <UserManagement users={appData.adminUsers} balances={appData.adminBalances} departments={appData.departments} onSave={async (form) => {
       const payload = {
@@ -290,6 +322,7 @@ function getTitle(view, role) {
   if (view === 'admin-users') return 'People & Access';
   if (view === 'employees') return 'Employee Management';
   if (view === 'approvals') return 'Leave Approvals';
+  if (view === 'history') return 'Decision History';
   if (view === 'apply') return 'Apply for Leave';
   if (view === 'my-leaves') return 'My Leaves';
   if (role === 'admin') return 'Administration Dashboard';

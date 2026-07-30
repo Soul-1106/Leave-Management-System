@@ -2,7 +2,7 @@ import { LEAVE_TYPE_TOKENS } from '../../utils/constants';
 import { Icon } from '../common/Icon';
 import { LeaveStatusBadge } from './LeaveStatusBadge';
 
-export function LeaveCard({ leave }) {
+export function LeaveCard({ leave, onDelete, deleting = false }) {
   const type = leave.type ?? leave.leaveType ?? 'Casual Leave';
   const token = LEAVE_TYPE_TOKENS[type] ?? LEAVE_TYPE_TOKENS['Casual Leave'];
 
@@ -21,6 +21,16 @@ export function LeaveCard({ leave }) {
         {leave.approver && <span>Approver: {leave.approver}</span>}
         {leave.days != null && <span>Days: {leave.days}</span>}
       </div>
+      {String(leave.status).toLowerCase() === 'pending' && onDelete && (
+        <button
+          type="button"
+          className="danger-button"
+          disabled={deleting}
+          onClick={() => onDelete(leave)}
+        >
+          {deleting ? 'Deleting...' : 'Delete request'}
+        </button>
+      )}
     </article>
   );
 }

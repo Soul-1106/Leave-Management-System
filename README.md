@@ -9,38 +9,20 @@ production application runs as one Go server with the React frontend embedded.
 - Node.js 22 or newer, only for frontend development and builds
 - A Supabase project
 
+# Three alternatives to run the program:
 
-## 1. Install and build
-
-Install the root development runner and frontend dependencies:
-
-```powershell
-npm install
-npm run setup
-```
-
-Create the production frontend bundle:
-
-```powershell
-cd frontend
-npm run build
-cd ..
-```
-
-Copy the built frontend into the Go server:
-
-```powershell
-Remove-Item backend/cmd/web/* -Recurse -Force
-Copy-Item frontend/dist/* backend/cmd/web/ -Recurse -Force
-```
-
-## 4. Run in development
+## 1. Run in development
 
 From the project root:
 
 ```powershell
-npm run dev
+npm.cmd run dev
 ```
+
+Before starting, this automatically checks the Node.js and Go installations,
+required `.env` variables, and Supabase URL formats. Missing project dependencies
+are installed automatically. Use `npm.cmd` in PowerShell if script execution
+policy blocks `npm.ps1`.
 
 This starts both:
 
@@ -53,10 +35,19 @@ Open the development application at:
 http://localhost:5173
 ```
 
-## 5. Run as a single server
+## 2. Run only the Go backend
 
-After building and copying the frontend into `backend/cmd/web`, Node.js is not
-required to run the application:
+From the project root:
+
+```powershell
+go run ./backend/cmd
+```
+
+
+## 3. Run as a single production-style server
+
+After the React frontend has been built and copied into `backend/cmd/web`,
+Node.js is not required to run the application:
 
 ```powershell
 cd backend
@@ -69,7 +60,23 @@ Open:
 http://localhost:8080
 ```
 
-## Tests
+# Testing accounts and their passwords for accessing the dashboard
+
+```admin
+gmail=haneeff110@gmail.com
+password=123456
+```
+
+```manager account
+gmail=hasan@gmail.com
+password=12345678
+```
+
+```employee account
+gmail=jack@gmail.com
+password=12345678
+```
+## Tests commands if needed
 
 Run all backend checks:
 

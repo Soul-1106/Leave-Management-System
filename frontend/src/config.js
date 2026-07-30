@@ -7,6 +7,7 @@ export const roleNavigation = {
   manager: [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'approvals', label: 'Leave Approvals', icon: 'approvals' },
+    { id: 'history', label: 'Decision History', icon: 'leaves' },
     { id: 'employees', label: 'My Team', icon: 'employees' },
   ],
   admin: [

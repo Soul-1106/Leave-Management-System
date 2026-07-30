@@ -83,7 +83,9 @@ func main() {
 		employeeCached(http.HandlerFunc(handlers.GetMyLeaves)),
 		employeeWrite(http.HandlerFunc(handlers.GetMyLeaves)),
 	))
+	apiMux.Handle("/api/leaves/my/", employeeWrite(http.HandlerFunc(handlers.DeleteMyLeave)))
 	apiMux.Handle("/api/leaves/approvals", managerCached(http.HandlerFunc(handlers.GetApprovals)))
+	apiMux.Handle("/api/leaves/history", managerCached(http.HandlerFunc(handlers.GetApprovalHistory)))
 	apiMux.Handle("/api/employees", managerCached(http.HandlerFunc(handlers.GetEmployees)))
 	apiMux.Handle("/api/leaves/balances", authenticatedCached(http.HandlerFunc(handlers.GetLeaveBalances)))
 	apiMux.Handle("/api/leaves/", managerWrite(http.HandlerFunc(handlers.DecideLeave)))

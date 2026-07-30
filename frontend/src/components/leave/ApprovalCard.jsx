@@ -30,8 +30,8 @@ export function ApprovalCard({ item, onDecision, onViewAttachment, actionable = 
           <strong>{item.dates}</strong>
         </div>
         <div>
-          <span className="meta-label">Requested</span>
-          <strong>{item.requested ?? '—'}</strong>
+          <span className="meta-label">{item.decisionDate ? 'Decided' : 'Requested'}</span>
+          <strong>{item.decisionDate || item.requested || '—'}</strong>
         </div>
         <div>
           <span className="meta-label">Days</span>

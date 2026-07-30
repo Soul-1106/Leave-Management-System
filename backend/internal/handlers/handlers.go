@@ -80,12 +80,35 @@ func GetMyLeaves(w http.ResponseWriter, r *http.Request) {
 	respond(w, data, err)
 }
 
+func DeleteMyLeave(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodDelete) {
+		return
+	}
+	id := strings.Trim(strings.TrimPrefix(r.URL.Path, "/api/leaves/my/"), "/")
+	if id == "" || strings.Contains(id, "/") {
+		http.Error(w, "leave ID is required", http.StatusBadRequest)
+		return
+	}
+	identity, _ := middleware.IdentityFrom(r)
+	err := services.DeletePendingLeave(r.Context(), identity.EmployeeID, id)
+	respond(w, map[string]string{"id": id, "status": "deleted"}, err)
+}
+
 func GetApprovals(w http.ResponseWriter, r *http.Request) {
 	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 	identity, _ := middleware.IdentityFrom(r)
 	data, err := services.GetManagerLeaves(r.Context(), identity)
+	respond(w, data, err)
+}
+
+func GetApprovalHistory(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	identity, _ := middleware.IdentityFrom(r)
+	data, err := services.GetManagerLeaveHistory(r.Context(), identity)
 	respond(w, data, err)
 }
 

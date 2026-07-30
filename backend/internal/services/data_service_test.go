@@ -29,3 +29,14 @@ func TestValidateLeaveRequestAcceptsSingleYear(t *testing.T) {
 		t.Fatalf("valid request was rejected: %v", err)
 	}
 }
+
+func TestValidateLeaveDeletionAllowsOnlyPendingRequests(t *testing.T) {
+	if err := validateLeaveDeletion("pending"); err != nil {
+		t.Fatalf("pending request was rejected: %v", err)
+	}
+	for _, status := range []string{"approved", "rejected"} {
+		if err := validateLeaveDeletion(status); err == nil {
+			t.Fatalf("%s request should not be deletable", status)
+		}
+	}
+}

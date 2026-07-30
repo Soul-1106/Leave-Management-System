@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -116,6 +118,14 @@ func GetLeaves(ctx context.Context, employeeID string) ([]models.Leave, error) {
 }
 
 func GetManagerLeaves(ctx context.Context, identity middleware.Identity) ([]models.Approval, error) {
+	return getManagerLeavesByState(ctx, identity, false)
+}
+
+func GetManagerLeaveHistory(ctx context.Context, identity middleware.Identity) ([]models.Approval, error) {
+	return getManagerLeavesByState(ctx, identity, true)
+}
+
+func getManagerLeavesByState(ctx context.Context, identity middleware.Identity, history bool) ([]models.Approval, error) {
 	conn, err := db()
 	if err != nil {
 		return nil, err
@@ -124,7 +134,8 @@ func GetManagerLeaves(ctx context.Context, identity middleware.Identity) ([]mode
 		SELECT l.id, u.full_name, e.employee_id, e.designation, COALESCE(d.name,''), lt.name,
 		       to_char(l.start_date,'Mon DD, YYYY') || ' - ' || to_char(l.end_date,'Mon DD, YYYY'),
 		       l.reason, to_char(l.created_at,'Mon DD, YYYY'), (l.end_date-l.start_date)+1, l.status::text,
-		       l.attachment_path IS NOT NULL, COALESCE(l.attachment_name,'')
+		       l.attachment_path IS NOT NULL, COALESCE(l.attachment_name,''),
+		       COALESCE(to_char(l.approval_date,'Mon DD, YYYY'), '')
 		FROM leaves l
 		JOIN employees e ON e.id=l.employee_id
 		JOIN users u ON u.id=e.user_id
@@ -136,8 +147,13 @@ func GetManagerLeaves(ctx context.Context, identity middleware.Identity) ([]mode
 		query += ` AND u.manager_id=$1`
 		args = append(args, identity.UserID)
 	}
-	query += ` AND l.status='pending'`
-	query += ` ORDER BY l.created_at DESC`
+	if history {
+		query += ` AND l.status IN ('approved', 'rejected')`
+		query += ` ORDER BY l.approval_date DESC, l.created_at DESC`
+	} else {
+		query += ` AND l.status='pending'`
+		query += ` ORDER BY l.created_at DESC`
+	}
 	rows, err := conn.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -146,7 +162,7 @@ func GetManagerLeaves(ctx context.Context, identity middleware.Identity) ([]mode
 	var result []models.Approval
 	for rows.Next() {
 		var item models.Approval
-		if err := rows.Scan(&item.LeaveID, &item.Name, &item.ID, &item.Role, &item.Dept, &item.Leave, &item.Dates, &item.Reason, &item.Requested, &item.Days, &item.Status, &item.HasAttachment, &item.AttachmentName); err != nil {
+		if err := rows.Scan(&item.LeaveID, &item.Name, &item.ID, &item.Role, &item.Dept, &item.Leave, &item.Dates, &item.Reason, &item.Requested, &item.Days, &item.Status, &item.HasAttachment, &item.AttachmentName, &item.DecisionDate); err != nil {
 			return nil, err
 		}
 		result = append(result, item)
@@ -277,6 +293,57 @@ func validateLeaveRequest(input models.CreateLeaveRequest) error {
 	}
 	if strings.TrimSpace(input.Reason) == "" {
 		return clientError(400, "reason is required")
+	}
+	return nil
+}
+
+func DeletePendingLeave(ctx context.Context, employeeID, leaveID string) error {
+	conn, err := db()
+	if err != nil {
+		return err
+	}
+	tx, err := conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var status, attachmentPath string
+	err = tx.QueryRowContext(ctx, `
+		SELECT l.status::text, COALESCE(l.attachment_path, '')
+		FROM leaves l
+		JOIN employees e ON e.id=l.employee_id
+		WHERE l.id=$1 AND e.employee_id=$2
+		FOR UPDATE`, leaveID, employeeID).Scan(&status, &attachmentPath)
+	if err == sql.ErrNoRows {
+		return clientError(404, "leave request not found")
+	}
+	if err != nil {
+		return err
+	}
+	if err = validateLeaveDeletion(status); err != nil {
+		return err
+	}
+	if _, err = tx.ExecContext(ctx, `DELETE FROM leaves WHERE id=$1`, leaveID); err != nil {
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	// Remote cleanup is best-effort: a temporary Storage failure must not make
+	// a successfully deleted request appear to have failed.
+	if attachmentPath != "" {
+		if cleanupErr := storageRequest(ctx, http.MethodDelete, attachmentPath, "", nil, nil); cleanupErr != nil {
+			log.Printf("attachment_cleanup_failed leave_id=%q error=%q", leaveID, cleanupErr)
+		}
+	}
+	return nil
+}
+
+func validateLeaveDeletion(status string) error {
+	if status != "pending" {
+		return clientError(409, "only pending leave requests can be deleted")
 	}
 	return nil
 }
